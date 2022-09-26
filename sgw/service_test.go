@@ -42,10 +42,10 @@ func TestWriteToSyncGateway(t *testing.T) {
 	results := make(chan string, userNum)
 	jobs := make(chan int, userNum)
 
-	const syncGatewayURL = "http://localhost:4985"
+	const syncGatewayURL = "http://167.99.211.75:4985"
 	const db = "offline_reads"
 
-	service := NewService(syncGatewayURL, db, errorFile)
+	service := NewService(syncGatewayURL, db, errorFile, "some_api_key")
 
 	for i := 0; i < userNum; i++ {
 		go service.WriteToSyncGateway(&users, results, jobs, i)

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"sgw_user_migrate/sgw"
 	"time"
@@ -13,13 +14,18 @@ func main() {
 	//read from flags
 	syncGatewayURLPointer := flag.String("url", "http://localhost:4985", "Sync Gateway URL")
 	dbPointer := flag.String("db", "offline_reads", "Database name")
+	apiKeyPointer := flag.String("key", "", "API Key")
+	fileNamePointer := flag.String("file", "main", "File name")
 
 	flag.Parse()
 
 	syncGatewayURL := *syncGatewayURLPointer
 	db := *dbPointer
+	apiKey := *apiKeyPointer
+	fileName := *fileNamePointer
+
 	//open a file
-	file, err := os.Open("files/sample.json")
+	file, err := os.Open("files/" + fileName + ".json")
 	if err != nil {
 		panic(err)
 	}
@@ -59,11 +65,13 @@ func main() {
 
 	now := time.Now()
 
-	service := sgw.NewService(syncGatewayURL, db, errorFile)
+	service := sgw.NewService(syncGatewayURL, db, errorFile, apiKey)
 
+	client := &http.Client{}
+	defer client.CloseIdleConnections()
 	//loop through the queryResult and print the values
 	for i := 0; i < workerNums; i++ {
-		go service.WriteToSyncGateway(&queryResult, results, jobs, i)
+		go service.WriteToSyncGateway(&queryResult, results, jobs, i, client)
 	}
 
 	for i := 0; i < jobNums; i++ {
